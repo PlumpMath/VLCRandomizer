@@ -49,6 +49,11 @@ namespace VLCRandomizer
 
             }
         }
+        public void Main()
+        {
+            VLCRandomizer rando = new VLCRandomizer();
+            Random.
+        }
         
     }
     class ContentRoot
@@ -68,5 +73,7 @@ namespace VLCRandomizer
     {
         public List<string> episodes;
 
-    }
+    };
+    
+    
 }

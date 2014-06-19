@@ -10,6 +10,7 @@ namespace VLCRandomizer
     {
         public VLCRandomizer(string vlcDirectory, string playlistName)
         {
+            contents = new List<ContentRoot>();
             this.vlcDirectory = vlcDirectory;
             this.playlistName = playlistName;
         }
@@ -24,7 +25,10 @@ namespace VLCRandomizer
 
                 return contents.Where(s => (s as ContentRoot).isSelected == true).ToList();
             }
-            set;
+            set
+            {
+                this.selectedRoot = value;
+            }
         }
         public List<Content> selectedContent
         {
@@ -36,24 +40,30 @@ namespace VLCRandomizer
 
                 return output;
             }
-            set;
+            set
+            {
+                this.selectedContent = value;
+            }
         }
         public void AddRoot(string path)
         {
             ContentRoot newRoot = new ContentRoot(path);
-
+            newRoot.generateContentList();
+            contents.Add(newRoot);
         }
         
 
         public void generatePlaylist()
         {
+            Random random = new Random();
             int counter = 0;
-            
+            List<Content> numContent = new List<Content>();
+            numContent = selectedContent.OrderBy(x => random.Next()).Take(numItems).ToList();
             using(StreamWriter sw = new StreamWriter(playlistName))
             {
                 sw.WriteLine("[playlist]");
-                sw.WriteLine("NumberOfEntries=" + selectedContent.Count);
-                foreach(Content c in selectedContent)
+                sw.WriteLine("NumberOfEntries=" + numContent.Count);
+                foreach(Content c in numContent)
                 {
                     counter++;
                     sw.WriteLine("File" + counter + "=" + c.path);
@@ -61,10 +71,13 @@ namespace VLCRandomizer
 
             }
         }
-        public void Main()
+        public static void Main()
         {
             VLCRandomizer rando = new VLCRandomizer(vlcDirectory: "C:\\Program Files (x86)\\VideoLAN\\VLC", playlistName: "test.pls");
             rando.AddRoot("Y:\\Television\\American Dad");
+            rando.numItems = 5;
+            Console.WriteLine(rando.contents);
+            rando.generatePlaylist();
             
         }
         
@@ -80,7 +93,10 @@ namespace VLCRandomizer
                 string[] result = path.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
                 return result[result.Length - 1];
             }
-            set;
+            set
+            {
+                this.rootName = value;
+            }
         }
         public bool isSelected;
         public List<Content> contents;
@@ -88,18 +104,20 @@ namespace VLCRandomizer
         {
             return contents.Where( s => (s as Content).isSelected == true).ToList() ;
         }
-        public List<Content> generateContentList()
+        public void generateContentList()
         {
             string[] fileEntries = Directory.GetFiles(this.path);
             foreach(string s in fileEntries)
             {
-
+                Content newContent = new Content(this.path, this);
+                this.contents.Add(newContent);
             }
         }
         public ContentRoot(string path)
         {
             this.path = path;
-            isSelected = false;
+            isSelected = true;
+            contents = new List<Content>();
         }
         public bool isBottomLevel()
         {
@@ -108,7 +126,10 @@ namespace VLCRandomizer
     }
     class ContentDivider : ContentRoot
     {
-
+        public ContentDivider(string path) : base(path)
+        {
+            
+        }
     }
     class Content : ContentRoot
     {
@@ -120,12 +141,16 @@ namespace VLCRandomizer
                 string[] result = path.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
                 return result[result.Length - 1];
             }
-            set;
+            set
+            {
+                this.name = value;
+            }
         }
         public ContentRoot parent; 
         public Content(string path, ContentRoot parent) : base(path)
         {
             this.parent = parent;
+            this.isSelected = true;
         }
 
 
